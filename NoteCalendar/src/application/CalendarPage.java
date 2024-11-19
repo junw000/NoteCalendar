@@ -13,6 +13,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -34,6 +35,7 @@ public class CalendarPage {
 	private GridPane grid;
 	private final String[] days = { "Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun" };
 	private Region[] region = new Region[2];
+	Label currMonth;
 
 	public CalendarPage(LocalDate currDate) {
 
@@ -46,7 +48,7 @@ public class CalendarPage {
 
 	}
 	
-	private Region[] changeMonth(int direction) {
+	private void changeMonth(int direction) {
 		
 		month = (direction >= 0) ? month.plus(1) : month.minus(1);
 		
@@ -61,15 +63,13 @@ public class CalendarPage {
 //		System.out.println(month.getValue());
 		
 		// setting up calendar again
-		HBox title = setTitle(); 
-		grid = setCalendar();
-				
-		region[0] = title;
-		region[1] = grid; 
+		changeTitle();
+		grid = setCalendar();	
 		
-
-		
-		return region;
+	}
+	
+	public void changeTitle() {
+		currMonth.setText(month.toString());
 	}
 
 	public HBox setTitle() {
@@ -78,17 +78,19 @@ public class CalendarPage {
 		// make buttons and title
 		Button backButton = new Button("<");
 		Button nextButton = new Button(">");
-		Text currMonth = new Text(month.toString());
+		currMonth = new Label(month.toString());
 		
-		StringProperty currText = new SimpleStringProperty("Bound Text");
+//		StringProperty currText = new SimpleStringProperty("Bound Text");
+//		
+//		currMonth.textProperty().bind(currText);
+//		
+//		currText.set(month.toString());
 		
-		currMonth.textProperty().bind(currText);
-		
-		currText.set(month.toString());
-		
-		// setting button Ids
+		// setting button Ids and length of month text
 		backButton.setId("back");
 		nextButton.setId("next");
+		currMonth.setPrefWidth(150); 
+		currMonth.setAlignment(Pos.CENTER);
 						
 		currMonth.setFont(Font.font("New York Times", FontWeight.BOLD, 25));
 		
@@ -108,6 +110,7 @@ public class CalendarPage {
 		// set margins and padding
 		hbox.setAlignment(Pos.CENTER);
 		hbox.setPadding(new Insets(3));
+		hbox.setSpacing(10);
 		HBox.setMargin(currMonth, new Insets(5));
 		
 		return hbox;
@@ -120,6 +123,9 @@ public class CalendarPage {
 
 		// sets the headers for the calendar
 		setHeader(grid);
+		
+		// deletes the previous buttons
+		grid.getChildren().clear();
 
 		// check at what weekday the month starts in
 		int firstDay = getFirstDay(month).getValue() - 1;
