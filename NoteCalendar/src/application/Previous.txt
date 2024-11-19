@@ -1,0 +1,257 @@
+package application;
+	
+import javafx.application.Platform;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.geometry.VPos;
+import javafx.animation.TranslateTransition;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import java.util.List;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.io.IOException;
+import javafx.scene.control.ComboBox;
+import java.util.NoSuchElementException;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import java.time.Month;
+import java.time.YearMonth;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.Set; 
+
+
+public class Main extends Application {
+	LocalDate currDate;
+	private String month;
+	private int numMonth; 
+	private int year;
+	private int gridCount;
+	private final String[] days = {"Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun"};
+
+	
+	@Override
+	public void start(Stage primaryStage) {
+		try {		
+			
+			// record current month, year, and day
+			currDate = LocalDate.now(); 
+			month = currDate.getMonth().toString();
+			numMonth = currDate.getMonth().getValue();
+			year = currDate.getYear(); 
+			
+			
+			// Setting up panes
+			BorderPane root = new BorderPane();
+			GridPane grid = setCalendar(); 
+			HBox hbox = setTitle();
+			
+			
+			// Set up the title (hbox) and calendar (grid) on screen
+			root.setTop(hbox);
+			root.setCenter(grid);
+			BorderPane.setAlignment(grid, Pos.CENTER);
+						
+			
+			// Create the scene
+			Scene scene = new Scene(root,800,800);
+			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			primaryStage.setScene(scene);
+			
+			
+			primaryStage.show();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public HBox setTitle() {
+		HBox hbox = new HBox();
+		
+		
+		// make buttons and title
+		Button backButton = new Button("<");
+		Button nextButton = new Button(">");
+		Text currMonth = new Text(month);
+				
+		currMonth.setFont(Font.font("New York Times", FontWeight.BOLD, 25));
+		
+		// put the buttons and title in the hbox
+		hbox.getChildren().add(backButton);
+		hbox.getChildren().add(currMonth);
+		hbox.getChildren().add(nextButton);
+		
+		// set margins and padding
+		hbox.setAlignment(Pos.CENTER);
+		hbox.setPadding(new Insets(3));
+		HBox.setMargin(currMonth, new Insets(5));
+		
+		return hbox;
+	}
+	
+	public GridPane setCalendar() {
+		
+		// sets the number of grids needed for the month
+		setGridCount();
+		
+		// creates new grid
+		GridPane grid = new GridPane();
+		
+		// sets the headers for the calendar
+		setHeader(grid);
+		
+		// check at what weekday the month starts in
+		int firstDay = getFirstDay(currDate.getMonth()).getValue() - 1;
+		
+		// sets up the calendar to fill up the days of the previous month
+		setUpPreviousMonth(grid, firstDay);
+		
+		int row = 0;
+		int col = 0;
+		
+		// Place buttons in the grid, making sure they don't overlap
+	    for (int i = 0; i < gridCount; i++) {
+	        Button button = new Button();
+	        button.setText("" + (i + 1));
+	        
+	        button.setMinSize(100, 100);
+	        button.setMaxSize(100, 100);
+
+	        // Calculate the row and column for each button
+	        row = (i + firstDay) / 7 + 1;  // 7 buttons per row (for a 7-day week layout)
+	        col = (i + firstDay) % 7;  // Place buttons in columns, with 7 per row
+
+	        // Add the button to the grid at the calculated position (row, col)
+	        grid.add(button, col, row);
+	        
+	    }
+	    
+	    if (col != 6) {
+	    	// sets up days for the remaining week if calendar is not filled
+        	setUpRestOfDays(grid, row, col);
+        }
+	    
+	    // setting the alignment
+	    grid.setAlignment(Pos.CENTER);
+		
+		return grid;
+	}
+	
+	
+	/**
+	 * Checks if the current year is a leap year
+	 * @return true if it is leap year, false if it is not
+	 */
+	public boolean isLeapYear() {
+		Calendar cal = Calendar.getInstance();
+		
+		cal.set(Calendar.YEAR, this.year);
+		
+		
+		return cal.getActualMaximum(Calendar.DAY_OF_YEAR) > 365;
+		
+	}
+	
+	private void setGridCount() {
+		
+		Set<Integer> thirtyDayMonths = Set.of(4, 6, 9, 11);
+
+		// checking if the month has 30 or 31 days, or if it is February
+		if (numMonth == 2) {
+					
+			if (isLeapYear()) {
+				gridCount = 29;
+			} else {
+				gridCount = 28; 
+			}
+					
+		} else if (thirtyDayMonths.contains(numMonth)) {
+			gridCount = 30;
+		} else {
+			gridCount = 31;
+		}
+	}
+	
+	private void setUpPreviousMonth(GridPane grid, int firstDay) {
+		// check the number of days in the previous month
+		int lastDay = YearMonth.of(year, currDate.getMonth().minus(1)).lengthOfMonth();
+
+		// inputting the dates from the previous month to fill the calendar
+		for (int k = firstDay - 1; k >= 0; k--) {
+
+			Button button = new Button();
+			button.setText("" + lastDay);
+
+			// setting button size
+			button.setMinSize(100, 100);
+			button.setMaxSize(100, 100);
+
+			int row = k / 7 + 1;
+			int col = k % 7;
+
+			grid.add(button, col, row);
+			lastDay--;
+
+		}
+	}
+	
+	private void setUpRestOfDays(GridPane grid, int row, int col) {
+		int currDay = 1;
+		
+		while (col != 6) {
+			
+			Button button = new Button();
+			button.setText("" + currDay);
+
+			// setting button size
+			button.setMinSize(100, 100);
+			button.setMaxSize(100, 100);
+
+			
+			currDay++;
+			col++;
+			
+			grid.add(button, col, row);
+			
+		}
+	}
+	
+	private void setHeader(GridPane grid) {
+		// Making the weekday headers for the calendar
+		for (int j = 0; j < 7; j++) {
+			Text day = new Text(days[j]);
+			day.setFont(Font.font("New York Times", FontWeight.BOLD, 15));
+
+			int col = j % 7;
+
+			grid.add(day, col, 0);
+
+			GridPane.setMargin(day, new Insets(10));
+			GridPane.setHalignment(day, HPos.CENTER);
+			GridPane.setValignment(day, VPos.CENTER);
+		}
+	}
+	
+	
+	private DayOfWeek getFirstDay(Month currMonth) {
+		
+		return LocalDate.of(year, currMonth, 1).getDayOfWeek();
+		
+	}
+	
+	public static void main(String[] args) {
+		launch(args);
+	}
+}
