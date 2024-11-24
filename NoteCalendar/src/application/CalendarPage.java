@@ -7,6 +7,8 @@ import java.time.YearMonth;
 import java.util.Calendar;
 import java.util.Set;
 
+import javax.sound.midi.SysexMessage;
+
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -55,7 +57,9 @@ public class CalendarPage {
 		// checking if you went to next year
 		if (month.getValue() == 1 && numMonth == 12) {
 			year++;
-		} 
+		} else if (month.getValue() == 12 && numMonth == 1) {
+			year--;
+		}
 		
 		// setting to next month
 		numMonth = month.getValue();
@@ -120,12 +124,12 @@ public class CalendarPage {
 		
 		// sets the number of grids needed for the month
 		setGridCount();
-
-		// sets the headers for the calendar
-		setHeader(grid);
 		
 		// deletes the previous buttons
 		grid.getChildren().clear();
+		
+		// sets the headers for the calendar
+		setHeader(grid);
 
 		// check at what weekday the month starts in
 		int firstDay = getFirstDay(month).getValue() - 1;
@@ -153,6 +157,7 @@ public class CalendarPage {
 			grid.add(button, col, row);
 
 		}
+		
 
 		if (col != 6 || row != 6) {
 			// sets up days for the remaining week if calendar is not filled
@@ -229,11 +234,16 @@ public class CalendarPage {
 
 	
 	private void setUpRestOfDays(GridPane grid, int row, int col) {
-		int currDay = 1;
+		int currDay = 1;	
 		
-		boolean setReq = (row != 6) ? (row != 6) : (col != 6);
+		// setting up for case where all the columns are filled but
+		// there is an extra row left
+		if (row == 5 && col == 6) { row++; col = -1; }
 
-		while (col != 6) {
+		boolean setReq = (row != 6) ? (row != 6 && col != 6) : (col != 6);
+		
+
+		while (setReq) {
 
 			Button button = new Button();
 			button.setText("" + currDay);
@@ -241,13 +251,31 @@ public class CalendarPage {
 			// setting button size
 			button.setMinSize(100, 100);
 			button.setMaxSize(100, 100);
-
-			currDay++;
+						
+			if (numMonth == 6) {
+				System.out.println("col: " + col); 
+				System.out.println("row: " + row); 
+				
+			}
+			
+			
 			col++;
 
+			
 			grid.add(button, col, row);
-
+			
+			if (col == 6 && row != 6) {
+				row++;
+				col = -1;
+			}
+			
+			if (row > 6 || col >= 6) {
+				break;
+			}
+			
+			currDay++;
 		}
+		
 	}
 
 	private void setHeader(GridPane grid) {
